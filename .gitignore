@@ -5,3 +5,4 @@ project/go_kv
 project/kv_database
 project/sb-judger
 eight_part/docs/.obsidian/
+.vscode/
