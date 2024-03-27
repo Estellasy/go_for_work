@@ -1,8 +1,5 @@
 .DS_Store
 .idea/
-project/go_cloud_disk
-project/go_kv
-project/kv_database
-project/sb-judger
+project/*
 eight_part/docs/.obsidian/
 .vscode/
