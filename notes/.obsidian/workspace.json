@@ -1,0 +1,171 @@
+{
+  "main": {
+    "id": "602cee5e642b92c8",
+    "type": "split",
+    "children": [
+      {
+        "id": "03dc00e0bfec14c6",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "0241e775c250f6b8",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "kvdb.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "bc933a2c83ca579e",
+            "type": "leaf",
+            "state": {
+              "type": "image",
+              "state": {
+                "file": "attachments/Pasted image 20240408200200.png"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "a0ec358d8fe7ec84",
+    "type": "split",
+    "children": [
+      {
+        "id": "64fde46702f81b02",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "b5c77ffe993eb844",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical"
+              }
+            }
+          },
+          {
+            "id": "81e6c591fe8cd52d",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              }
+            }
+          },
+          {
+            "id": "f34f845ae584e590",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {}
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "645c93328aee9204",
+    "type": "split",
+    "children": [
+      {
+        "id": "4086cc1553c05f3b",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "20f07b0bf4cc046d",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "kvdb.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          },
+          {
+            "id": "31c8b4a51ac452d5",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "kvdb.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          },
+          {
+            "id": "954e36cd00501d14",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true
+              }
+            }
+          },
+          {
+            "id": "b9c46888784c9ad4",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "kvdb.md"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:打开快速切换": false,
+      "graph:查看关系图谱": false,
+      "canvas:新建白板": false,
+      "daily-notes:打开/创建今天的日记": false,
+      "templates:插入模板": false,
+      "command-palette:打开命令面板": false
+    }
+  },
+  "active": "0241e775c250f6b8",
+  "lastOpenFiles": [
+    "未命名.canvas",
+    "kvdb.md",
+    "attachments/Pasted image 20240408200200.png",
+    "bitcask-go问题.md",
+    "bitcask-go代码解读.md",
+    "attachments",
+    "attachments/Pasted image 20240408203637.png",
+    "attachments/Pasted image 20240408202838.png",
+    "attachments/Pasted image 20240408200235.png"
+  ]
+}

@@ -5,10 +5,11 @@ import (
 	"Gopan/common/errorx"
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
 	"math"
 	"strconv"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"Gopan/app/upload/rpc/internal/svc"
 	"Gopan/app/upload/rpc/types/upload"
@@ -47,11 +48,9 @@ func (l *InitialMultipartUploadLogic) InitialMultipartUpload(in *upload.InitialM
 	}
 	if err := l.svcCtx.Rdb.HSet(l.ctx, "multipart_"+upInfo.UploadID, "filesize_", upInfo.FileSize).Err(); err != nil {
 		return nil, errors.Wrapf(errorx.NewDefaultError("redis写入错误"), "redis写入错误 err:%v", err)
-
 	}
 	if err := l.svcCtx.Rdb.HSet(l.ctx, "multipart_"+upInfo.UploadID, "chunkcount_", upInfo.ChunkCount).Err(); err != nil {
 		return nil, errors.Wrapf(errorx.NewDefaultError("redis写入错误"), "redis写入错误 err:%v", err)
-
 	}
 
 	// 返回信息给前端
