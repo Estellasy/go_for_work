@@ -1,0 +1,100 @@
+% !TeX TS-program = xelatex
+
+\documentclass{resume}
+\ResumeName{任思怡}
+
+% 如果想插入照片，请使用以下两个库。
+% \usepackage{graphicx}
+% \usepackage{tikz}
+
+\begin{document}
+
+\ResumeContacts{
+  (+86)173-9612-6620,%
+  \ResumeUrl{mailto:siyiren1@foxmail.com}{siyiren1@foxmail.com},%
+  % \ResumeUrl{https://blog.fkynjyq.com}{blog.fkynjyq.com} \footnote{下划线内容包含超链接。},%
+  % \ResumeUrl{https://github.com/fky2015}{github.com/fky2015}%
+  wechat: cosmoos,
+  求职意向: Golang后端开发（实习）
+}
+
+% 如果想插入照片，请取消此代码的注释。
+% 但是默认不推荐插入照片，因为这不是简历的重点。
+% 如果默认的照片插入格式不能满足你的需求，你可以尝试调整照片的大小，或者使用其他的插入照片的方法。
+% 不然，也可以先渲染 PDF 简历，然后用其他工具在 PDF 上叠加照片。
+% \begin{tikzpicture}[remember picture, overlay]
+%   \node [anchor=north east, inner sep=1cm]  at (current page.north east) 
+%      {\includegraphics[width=2cm]{image.png}};
+% \end{tikzpicture}
+
+\ResumeTitle
+
+
+\section{教育经历}
+\ResumeItem
+[华中科技大学|硕士研究生]
+{华中科技大学（985）}
+[\textnormal{计算机科学与技术，计算机学院|}  学术型硕士研究生]
+[2022.09—2025.06（预计）]
+\textbf{GPA: 3.62/4.0}。主要研究方向为\textbf{面向工业缺陷检测任务的半监督学习}，一篇CCF-C论文在审。\newline
+获校优秀研究生干部，研究生数学建模竞赛三等奖（2022）。\textbf{2025年应届生}。
+
+\ResumeItem
+[华中师范大学|本科生]
+{华中师范大学（211）}
+[\textnormal{计算机科学与技术，计算机学院|} 工学学士]
+[2018.09—2022.06]
+
+\textbf{GPA: 3.6/4.0(专业前 10\%)}。主修课程包括数据结构、操作系统、计算机网络、算法设计与分析等。\newline
+获校三好学生（3次）、校优秀毕业生，全国大学生数学竞赛三等奖（2021）、全国大学生数学建模竞赛二等奖（2020）、蓝桥杯湖北省赛二等奖（2019）等。
+
+\section[技术能力]{技术能力}
+\begin{itemize}
+  \item \textbf{编程语言}：熟悉Golang，了解GMP调度模型、GC原理、channel与内存管理相关知识。
+  \item \textbf{脚本语言}：具有Python机器学习、深度学习、爬虫相关经验，熟悉Python脚本编写。
+  \item \textbf{数据库}：熟悉MySQL的基本原理和使用，了解事务、锁机制。熟悉Redis，了解内部数据结构、事务、内存淘汰策略等。
+  \item \textbf{数据结构和算法}：熟悉基本数据结构，如栈、队列、链表、树等。熟悉回溯、动态规划等算法。
+  \item \textbf{计算机网络和操作系统}：了解OSI七层模型，熟悉TCP/IP、HTTP等常用网络协议。熟悉进程间通信、内存管理、文件管理相关知识。
+  \item \textbf{微服务和消息队列}：了解微服务相关概念，了解protobuf数据存储格式的使用，了解Kafka工作原理。
+  \item \textbf{开发框架}：熟悉gin、go-zero、gorm等开发框架，了解部分底层设计。
+  \item \textbf{工作流}：熟悉Linux常用命令，了解Git常用命令。
+\end{itemize}
+
+% \section{工作经历}
+
+% \ResumeItem{北京 ABCD 有限公司}
+% [后端开发实习生/XXXX]
+% [2020.10—2021.03] 
+
+% \begin{itemize}
+%   \item \textbf{独立负责XXX业务后端的设计、开发、测试和部署。}通过 FaaS、Kafka 等平台实现站内信模板渲染服务。向上游提供 SDK 代码，增加或升级了多种离线和在线逻辑。完成了业务对站内信的多样需求。
+%   \item \textbf{参与 XXX 的需求分析，系统技术方案设计；完成需求开发、灰度测试、上线和监控。}
+% \end{itemize}
+
+\section{项目经历}
+
+\ResumeItem{\textbf{bitcask-go} | go语言实现的基于bitcask模型的高性能存储引擎} 
+\begin{itemize}
+    \item \textbf{存储模型}：采用 bitcask 模型和WAL技术，实现快速写入、读取和删除操作，最多只需一次磁盘IO。
+    \item \textbf{持久化}：实现了数据持久化功能，确保数据的可靠性和可恢复性。实现了bitcask模型的merge方法，对WAL数据进行合并去重，减少磁盘空间占用。
+    \item \textbf{索引}：基于google/btree平衡多叉树实现索引，实现高效、快速的数据访问，支持范围查找。
+    \item \textbf{并发控制}：使用锁机制，确保数据的一致性和并发访问的正确性。
+    \item \textbf{性能优化}：实现了bitcask模型的hint文件，采用WAL方式记录key和索引，避免重启时全量加载所有数据构建内存索引，提高启动速度。
+    \item 对kv数据库有了基本的认识和实践。
+\end{itemize}
+
+\ResumeItem{\textbf{go-cloud-disk} | 基于 go-zero 的微服务网盘}
+\begin{itemize}
+    \item \textbf{项目描述}：基于go-zero实现的云存储系统，集成腾讯云COS和MinIO集群，提供文件上传和下载服务。
+    \item \textbf{用户鉴权}：集成gomail发送验证码和第三方QQ身份验证，使用JWT进行状态会话管理，保证安全性和用户体验。
+    \item \textbf{文件传输}：实现了文件分块上传、断点续传、秒传，集成腾讯云COS和MinIO集群实现文件分块下载和合并，采用Kafka+goroutine+batcher实现文件信息的高并发处理。
+    \item \textbf{高性能}：使用grpc进行服务间通信，采用多个goroutine并发消费数据，降低消息的处理延迟。
+\end{itemize}
+
+\section{个人总结}
+\begin{itemize}
+  \item 乐观开朗，待人平和真诚，在校期间多次参加数学建模竞赛，解决实际问题和快速学习新技术的能力较强，具有良好的沟通能力和团队合作精神。
+  \item 经常阅读英文论文和文档，英语六级成绩521，其中阅读200+。
+  \item 涉猎广泛，积极尝试使用大语言模型和AI绘画等应用，早在其推出初期便开始使用，并持续分享和探索这些应用的申请和使用方法。
+\end{itemize}
+\end{document}
