@@ -23,7 +23,7 @@
 using namespace std;
 
 class Solution {
-public:
+public:   
     void sortColors(vector<int>& nums) {
         vector<int> cnt(3, 0);
         for (auto num:nums) {
