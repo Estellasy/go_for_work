@@ -549,47 +549,458 @@ defer 能够让我们推迟执行某些函数调用，推迟到当前函数返�
 ### 59. Golang开发新手常犯的50个错误
 
 ## Slice
-### 60. 
-### 61. 
-### 62. 
-### 63. 
-### 64. 
-### 65. 
-### 66. 
-### 67. 
-### 68. 
-### 69. 
-### 70. 
-### 71. 
-### 72. 
-### 73. 
-### 74. 
-### 75. 
-### 76. 
-### 77. 
-### 78. 
-### 79. 
-### 80. 
-### 81. 
-### 82. 
-### 83. 
-### 84. 
-### 85. 
-### 86. 
-### 87. 
-### 88. 
-### 89. 
-### 90. 
-### 91. 
-### 92. 
-### 93. 
-### 94. 
-### 95. 
-### 96. 
-### 97. 
-### 98. 
-### 99. 
-### 100. 
+
+## Map
+### Go map遍历为什么是无序的
+**这是go开发者有意为之。**
+
+- map在遍历时，不是从固定的0号bucket开始遍历的，而是从**随机**选取一个的bucket，从**随机的cell**开始遍历；
+- map在便利时，如果要按照顺序，则需要按序遍历bucket中和其overflow bucket中的cell。而map扩容后，key可能会变迁。
+
+如果需要顺序遍历map，则需要先将key放入一个slice中，再遍历slice。（遍历切片，打印对应的key值）
+
+### map为什么是非线程安全的
+线程安全：进行并发读写时，能够正常运行，并且得到预期的结果。
+
+go map更应该适应典型的使用场景（不需要从goroutine中进行安全访问），而是为了小部分访问，导致大部分程序服务加锁代价。
+
+下面的情况，程序会出现致命错误：fatal err: concurrent map writes
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	s := make(map[int]int)
+	for i := 0; i < 100; i++ {
+		go func(i int) {
+			s[i] = i
+		}(i)
+	}
+	for i := 0; i < 100; i++ {
+		go func() {
+			fmt.Println("map第%d个元素值是%d", i, s[i])
+		}(i)
+	}
+	time.Sleep(time.Second * 1)
+}
+```
+
+如果想实现线程安全，有两种方式
+- 读写锁
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+	"sync"
+)
+
+func main() {
+	var lock sync.RWMutex
+	s := make(map[int]int)
+	for i := 0; i < 100; i++ {
+	    go func(i int) {
+			lock.Lock()
+			s[i] = i
+			lock.Unlock()
+		}(i)
+	}
+
+	for i := 0; i < 100; i++ {
+	    go func(i int) {
+			lock.RLock()
+			fmt.Println("map第%d个元素值是%d", i, s[i])
+			lock.RUnlock()
+		}(i)
+	}
+}
+```
+
+- 使用go提供的sync.Map
+  - 原理：锁+读写分离
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+	"sync"
+)
+
+func main() {
+	var m sync.Map
+	for i := 0; i < 100; i++ {
+	    go func(i int) {
+			m.Store(i, i)
+		}(i)
+	}
+
+	for i := 0; i < 100; i++ {
+	    go func(i int) {
+			v, ok := m.Load(i)
+			fmt.Printf("Load: %v, %v", v, ok)
+		}(i)
+	}
+}
+```
+
+### go map如何查找
+go map有两种返回，分别是
+- value := m["name"]
+- value, ok := m["name"]
+
+map的查找通过生成汇编码，根据key的不同类型/参数，编译器会查找函数用更具体的函数替换。
+
+**查找流程**
+- 写保护检测：检查map的写标志位，如果flags=1，则导致程度panic
+- 计算hash值：t.hasher(key, uintptr(h))
+- 找到hash值对应的bucket：得到64位hash值，分为前8/中间/后5。前8bit位tophash，后5位buckets的编号。
+- 
+- 检查是否正在扩容：如果oldbuckets!=nil，则说明正在扩容，则bucket=oldbuckets+hash&oldbuckmask
+- 遍历bucket，查找key：根据tophash快速定位
+- 返回value或空指针
+
+### go map冲突解决方式
+比较常用的hash冲突解决方法有链地址法和开放寻址法。
+
+- 链地址法：创建新单元，将新单元添加到冲突单元所在链表底部。
+- 开放地址法：按照一定次序，从hash表中寻找一个空闲的单元。需要表的长度大于所需要存放元素的数量。
+
+**线性探测法**
+
+两种解决方法的比较：
+- 链地址法：不需要事先申请好足够的内存。对装在因子的容忍度更高，适合存储大对象。但是需要额外的空间存储指针。
+- 开放寻址法：数组的优点，数据量明确，装载因子小，适合采用开放寻址法。
+
+- Python：开放寻址
+- Java：链地址法
+- Go：链地址法，一个桶填满8个元素后，创建一个溢出桶，插入到尾部。
+  
+### go map负载因子为什么是6.5
+
+负载因子=哈希表存储的元素个数/桶个数
+
+负载因子是为了平衡空间和查找效率
+
+负载因子和扩容/迁移等重新散列等行为有直接关系
+
+### go map如何扩容
+- 扩容条件
+  - 超过负载：map元素个数>6.5*桶个数
+  - 溢出桶过多：对条件1的补充，删除时桶还在，即值存的比较稀疏
+- 扩容过程
+  - 双倍扩容：针对超过负载，新建buckets数组，新的buckets数组是原来的2倍。
+  - 等量扩容：将松散的键值对重新排列，实现更快的存储。
+
+hashGrow()和growWork()
+
+真正迁移时机是删除或者插入时。
+
+### go map和sync.Map的性能
+sync.Map的底层
+
+```go
+type Map struct {
+    mu Mutex
+	read atomic.Value	// readOnly 不用加锁
+	dirty map[interface{}]*entry
+	misses int
+}
+```
+
+sync.Map相对于map+RWLock，减少了加锁对读性能的影响。
+
+可以无锁访问read map，而且会优先操作read map。
+
+优点：适合读多写少的的场景。
+
+缺点：写多，需要提高read map优先级。
+
+## Go Channel
+### go channel底层实现原理
+
+go channel是一个先进先出的队列，go语言提倡不要通过共享内存实现通信，而是通过通信实现内存共享。CSP communicating sequential processes并发模型，通过goroutine和channel实现。
+
+**使用场景**
+- 停止信号监听
+- 定时任务
+- 生产方和消费方解耦
+- 控制并发数
+
+**底层数据结构**
+- 通过var声明或者make函数创建的channel变量是一个存储在函数栈上的指针，占8个字节，指向堆上的hchan结构体。
+
+hchan的buf是一个循环数组，sendx和recvx记录下一个发送和接收数据的下标，sendq和recvq是待发送和待接收的队列。channel是线程安全的，所以还有一把锁。
+
+**等待队列**
+双向链表，包含一个头结点和一个尾节点。
+
+每个节点是一个sudog结构体变量，记录哪个协程在等待，等待的是哪个channel，等待发送/接收的数据在哪里。
+
+```go
+type waitq struct {
+	first *sudog
+	last *sudog
+}
+
+type sudog struct {
+	g *g
+	next *sudog
+	prev *sudog
+	elem unsafe.Pointer
+	c *hchan
+	...
+}
+```
+
+**操作**
+- 创建`make(chan T, cap)`，底层调用makechan
+  - 检查
+    - 元素大小不能超过64k
+    - 元素的对齐大小不能超过maxAlign，也就是8字节
+    - 计算出来的内存是否超过限制
+  - 无缓冲channel：直接给hchan分配内存
+  - 有缓冲channel
+    - 元素不包含指针：hchan和底层数组分配一段连续地址
+    - 元素包含指针：hchan和底层数组分配两段连续地址
+- 发送`ch <- v`，底层调用`runtime.chansend`	
+  - 检查
+  - 发送：
+    - 读等待队列存在接受者：直接发送，唤醒
+    - 不存在接受者goroutine
+      - 发送到循环数组
+      - 阻塞
+- 接收
+  - 接收操作，编译时转换为chanrecv
+  - 检查：
+    - 写等待队列不为空
+      - 无缓冲：唤醒
+      - 有缓冲：循环数组的buf队首元素拷贝给接收变量，将第一个发送者的goroutine数据拷贝到buf循环数组队尾，唤醒发送的goroutine
+    - 为空
+      - buf非空，buf队首元素拷贝给接收变量
+      - buf为空，阻塞
+- 关闭`close(ch)`，底层调用`runtime.closechan`
+
+hchan结构体的主要组成部分有4个：
+- buf：用来保存goroutine之间传递数据的循环数组，用于缓存发送的数据
+- sendx和recvx：分别表示发送和接收操作读写buf的下标
+- sendq和recvq：分别表示发送和接收操作的等待队列
+- lock：互斥锁，用于保证对channel的各种操作是原子性的
+
+### go channel的特点
+类型上：无缓冲、有缓冲
+
+模式：写操作、读操作、读写操作
+
+状态：未初始化、正常、关闭
+
+| |未初始化|关闭|正常|
+|-|-|-|-|
+|关闭|panic|panic|正常关闭|
+|发送|永远阻塞导致死锁|panic|阻塞或成功发送|
+|读取|永远阻塞导致死锁|缓冲区为空则为零值，否则可以继续读|阻塞或成功接收|
+
+**注意点**
+1. 一个channel不能多次关闭
+2. 多个goroutine都监听一个channel，channel上的数据可以随机被一个goroutine取走进行消费
+3. 多个goroutine监听一个channel，当channel被关闭后，所有goroutine都能收到退出信号
+
+### go channel有无缓冲的区别
+||无缓冲|有缓冲|
+|创建方式|make(chan T)|make(chan T, cap)|
+|发送阻塞|数据接收前阻塞|缓冲满时发送阻塞|
+|接收阻塞|数据发送前阻塞|缓冲空时接收阻塞|
+
+无缓冲channel在写入前需要有协程等待读取，否则会阻塞。
+
+### go channel为什么是线程安全的
+
+**为什么要设计成线程安全的**
+
+不同协程使用channel进行通信，本身场景就是多线程，为了保证数据一致性，必须实现线程安全。
+
+**如何实现线程安全**
+
+在channel的底层实现中，hchan结构体采用Mutex锁保证数据读写安全。在对循环数组buf的数据进行入队和出队操作时，必须先获取互斥锁，才能操作channel数据。
+
+### go channel如何控制goroutine的并发执行顺序
+
+**多个goroutine并发执行时，本身不能保证顺序**
+
+思路：使用channel进行通信通知，用channel传递信息，从而控制并发执行顺序
+
+```go
+package main
+
+import (
+	"fmt"
+	"sync"
+	"time"
+)
+
+var wg sync.WaitGroup
+
+func main() {
+	ch1 := make(chan struct{}, 1)	// 不占内存空间
+	ch2 := make(chan struct{}, 1)
+	ch3 := make(chan struct{}, 1)
+	ch1 <- struct{}{}
+	wg.Add(3)
+	start := time.Now().Unix()
+	go print("goroutine1", ch1, ch2)	// 从第一个channel拿数据 通知第二个channel
+	go print("goroutine2", ch2, ch3)
+	go print("goroutine3", ch3, ch1)
+	wg.Wait()
+	end := time.Now().Unix()
+	fmt.Printf("duration: %d", end-start)
+}
+
+func print(goroutine string, inputchan chan struct{}, outputchan chan struct{}) {
+	// 模拟内部操作耗时
+	time.Sleep(1*time.Second)
+	select {
+		case <- inputchan:
+			fmt.Printf("%s: start\n", goroutine)
+			outchan <- struct{}{}	// 通知第二个channel 按照期待的顺序并发执行
+	}
+	wg.Done()
+}
+```
+### go channel共享内存有什么优劣势
+**共享内存来通信**-->共享内存
+
+**通信来共享内存**-->CSP
+
+大部分语言都是直接操作内存，通过互斥锁和CAS等操作保证并发安全。
+
+最大的优点：解耦
+
+![[Pasted image 20240514114832.png]]
+
+
+### go channel 发送和接收什么情况会出现死锁
+
+**死锁**
+
+- 单个协程永久阻塞
+- 多个协程因为竞争资源而造成阻塞
+
+**channel死锁场景**
+
+- 无缓冲区channel只写不读
+- 无缓冲区channel读在写后面
+- 超过缓冲区数量
+- 空读
+- 多个协程相互等待
+
+
+## 互斥锁 Mutex
+### 互斥锁实现原理
+
+互斥锁和读写互斥锁都属于悲观锁
+
+```go
+type Mutex struct {
+    state int32
+	sema uint32
+}
+```
+
+- state：标识锁的状态，有锁定、被唤醒、饥饿模式等，使用state二进制位标识
+![[Pasted image 20240514115601.png]]
+
+- sema：信号量，用于实现锁的阻塞和唤醒操作，阻塞队列的定位通过sema实现。
+![[Pasted image 20240514115702.png]]
+**加锁**
+![[Pasted image 20240514115817.png]]
+
+**解锁**
+![[Pasted image 20240514120049.png]]
+
+### 饥饿模式和正常模式
+- 饥饿模式：公平锁，防止被阻塞的goroutine长时间无法获取到锁（等待时间超过1ms，切换到饥饿模式），将锁直接交给等待队列的第一位，新进来的goroutine不会参与抢锁也不会进入自旋状态，直接进入队列尾部。
+- 正常模式：非公平锁，所有锁都是先入先出，被唤醒的和新申请的是一起竞争锁，被阻塞的很大可能竞争失败（性能最好，goroutine可以连续多次获得锁）
+
+互斥锁切换到正常模式：
+- G的执行时间小于1ms
+- 等待队列全部清空
+
+### go互斥锁允许自旋的条件
+
+**什么是自旋**
+
+线程没有获取到锁的两种常见处理方式：
+- 一直等待释放锁，也叫做自旋锁，不用阻塞，适用于并发低且程序执行时间短的场景，缺点是cpu占用较高
+- 阻塞，释放CPU给其他线程，适用于高并发场景，缺点是有线程上下文切换开销
+
+**允许自旋的条件**：
+- 锁已被占用，且不处于饥饿模式
+- 累计的自旋次数小于最大自旋次数（4次）
+- CPU核数>1
+- 有空闲的P
+- 当前goroutine所挂载的P下，本地待运行队列为空
+
+自旋本质调用的是runtime_doSpin指令
+
+
+### go读写锁实现原理
+读写锁是针对读多写少的场景，读写锁的实现原理和互斥锁类似，但是读写锁允许更高的并发度。
+
+```go
+type RWMutex struct {
+    w Mutex	// 复用互斥锁
+	writerSem uint32 // 信号量 用于等待读
+	readerSem uint32 // 信号量 用于等待写
+	readerCount uint32	// 当前执行读的goroutine数量
+	readerWait uint32	// 被阻塞的准备读的goroutine数量
+}
+```
+
+**加锁**：调用atomic.AddInt32(&rw.readerCount, 1)原子操作，将readerCount加1，如果readerCount为0，说明没有其他goroutine在执行读操作，则尝试获取锁。如果返回为负数，说明当前有其他写锁，休眠当前goroutine等待被唤醒。
+
+**释放读锁**：readerCount减1，如果返回值<0，调用rUnlockSlow进入慢速通道。
+
+**加写锁**：调用互斥锁的lock，如果当前有正在读的，则阻塞。readerCount原子性的加上一个很大的负数，阻塞读。
+
+**释放写锁**：先恢复lock，恢复之前写入的负数，根据当前有多少个读在等待，依次唤醒。
+
+- Lock不支持重入
+- Lock与哪个goroutine加锁解锁没关系（与对象无关）
+
+### go可重入锁的实现
+**可重入锁**：递归锁，在同一个线程的外层方法获取锁的时候，进入该线程内层方法时会自动获取锁，不会因为之前获取过还没有释放再次加锁而导致死锁。
+
+**为什么go没有可重入锁**
+
+Mutex是不可重入的锁，Mutex的实现中没有记录哪个goroutine拥有这把锁。没有办法记录重入条件。
+
+**如何实现可重入锁**
+- 记住持有锁的线程
+- 记录重入次数（加锁次数）
+
+
+### go的原子操作有哪些
+- atomic（最轻量级的锁，无锁结构，硬件支持）
+  - Add
+  - Load
+  - CompareAndSwap
+  - Swap
+  - Store
+> atomic操作的是一个地址，将可寻址的变量地址作为参数传递给方法，而不是传变量的值
+
+### 原子操作和锁的区别
+
+锁是原子操作的封装。
+
+原子操作是无锁操作，属于乐观锁。
+
+锁=原子操作+信号量。
 
 ## 调度模型
 **Go的GMP调度模型**
@@ -997,7 +1408,7 @@ func (o *Once) Do(f func()) {
 ```
 
 ### 3. Golang除了goroutine还有什么处理并发的方法
-goroutine，或channel+goroutine，以及sync提供的并发锁和信号量机制。
+goroutine，或channel+goroutine，以及sync提供的并发锁和信号量机制。 
 ```go
 done := make(chan struct{}, 1)
 go func() {
@@ -1153,30 +1564,3 @@ NewCond：Locker必填
 Wait：先加锁
 Signal：唤醒最先Wait的goroutine
 Broadcast：唤醒所有Wait的goroutine
-
-### 15.
-### 16.
-### 17.
-### 18.
-### 19.
-### 20.
-### 21.
-### 22.
-### 23.
-### 24.
-### 25.
-### 26.
-### 27.
-### 28.
-### 29.
-### 30.
-### 31.
-### 32.
-### 33.
-### 34.
-### 35.
-### 36.
-### 37.
-### 38.
-### 39.
-### 40.
